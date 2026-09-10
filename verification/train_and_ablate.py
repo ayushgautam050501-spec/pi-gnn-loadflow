@@ -209,3 +209,97 @@ json.dump({
     "ablation": {str(k): v for k,v in ablation.items()}
 }, open("experiment_results.json","w"), indent=2)
 print("\nSaved experiment_results.json")
+def calculate_stable_integrated_gradients(model, target_bus_idx, single_input_n, steps=50):
+    """
+    Computes standardized Integrated Gradients for a single test sample's prediction
+    using a physically grounded zero-injection baseline to ensure reproducibility.
+    """
+    # 1. Establish a zero-injection baseline (P=0, Q=0) in normalized space
+    # Since Xmean and Xstd are global constants from training data:
+    zero_injection_raw = np.zeros((n_bus, 2)) # [P=0, Q=0]
+    baseline_Xn = (zero_injection_raw - Xmean[0]) / Xstd[0] # Match (n_bus, 2) shape
+    
+    # 2. Linear interpolation path between baseline and current normalized input
+    alphas = np.linspace(0.0, 1.0, num=steps)
+    accumulated_gradients = np.zeros_like(single_input_n) # (n_bus, 2)
+    
+    eps = 1e-4 # Finite difference step size
+    
+    # 3. Path integration loop
+    for alpha in alphas:
+        # Generate the interpolated input snapshot
+        path_input = baseline_Xn + alpha * (single_input_n - baseline_Xn)
+        
+        # Calculate finite difference gradients for the target bus's voltage magnitude (index 0)
+        # Base forward pass
+        pred_base, _ = model.forward(path_input[np.newaxis, ...]) # Add batch dim
+        v_base = pred_base[0, target_bus_idx, 0]
+        
+        # Compute gradient for each feature (P and Q) across all nodes
+        for n_idx in range(n_bus):
+            for f_idx in range(2):
+                perturbed_input = path_input.copy()
+                perturbed_input[n_idx, f_idx] += eps
+                
+                pred_pert, _ = model.forward(perturbed_input[np.newaxis, ...])
+                v_pert = pred_pert[0, target_bus_idx, 0]
+                
+                # Finite difference approximation: dV / dX
+                grad_val = (v_pert - v_base) / eps
+                accumulated_gradients[n_idx, f_idx] += grad_val
+                
+    # 4. Average gradients and calculate attribution profiles
+    avg_gradients = accumulated_gradients / steps
+    integrated_gradients = (single_input_n - baseline_Xn) * avg_gradients
+    
+    return integrated_gradients
+
+# ---- Experiment 1: multiple seeds, baseline (lambda=0) vs PI-GNN (lambda=1.0) -> real error bars
+seeds = [0,1,2,3,4]
+results_baseline = []
+results_pignn = []
+
+# Tracker loops for XAI attribution consistency testing across causal nodes
+xai_scores_baseline = []
+xai_scores_pignn = []
+
+# Assume Bus 4 and Bus 5 are indices 3 and 4 for the N-1 line outage test sample (e.g., test sample 0)
+causal_buses = [3, 4] 
+test_sample_idx = test_idx[0]
+single_test_input = Xn[test_sample_idx]
+
+for s in seeds:
+    m0 = train_model(lam_physics=0.0, seed=s)
+    m1 = train_model(lam_physics=1.0, seed=s)
+    results_baseline.append(evaluate(m0, test_idx))
+    results_pignn.append(evaluate(m1, test_idx))
+    
+    # Compute XAI attribution on causal nodes for target Bus 4 using both models
+    ig_0 = calculate_stable_integrated_gradients(m0, target_bus_idx=3, single_input_n=single_test_input)
+    ig_1 = calculate_stable_integrated_gradients(m1, target_bus_idx=3, single_input_n=single_test_input)
+    
+    # Calculate percentage share of total absolute attribution captured by causal nodes (Bus 4 & Bus 5)
+    total_attr_0 = np.sum(np.abs(ig_0)) + 1e-12
+    causal_attr_0 = np.sum(np.abs(ig_0[causal_buses, :]))
+    xai_scores_baseline.append(causal_attr_0 / total_attr_0 * 100)
+    
+    total_attr_1 = np.sum(np.abs(ig_1)) + 1e-12
+    causal_attr_1 = np.sum(np.abs(ig_1[causal_buses, :]))
+    xai_scores_pignn.append(causal_attr_1 / total_attr_1 * 100)
+
+results_baseline = np.array(results_baseline)  # (5,4): mae_vm, rmse_vm, kcl_p, kcl_q
+results_pignn = np.array(results_pignn)
+
+print("=== Baseline GCN (lambda=0), mean +/- std over 5 seeds ===")
+print("MAE_vm: %.5f +/- %.5f" % (results_baseline[:,0].mean(), results_baseline[:,0].std()))
+print("RMSE_vm: %.5f +/- %.5f" % (results_baseline[:,1].mean(), results_baseline[:,1].std()))
+print("KCL_P resid: %.5f +/- %.5f" % (results_baseline[:,2].mean(), results_baseline[:,2].std()))
+print("KCL_Q resid: %.5f +/- %.5f" % (results_baseline[:,3].mean(), results_baseline[:,3].std()))
+print("XAI Causal Attribution Share: %.2f%% +/- %.2f%%" % (np.mean(xai_scores_baseline), np.std(xai_scores_baseline)))
+
+print("\n=== PI-GNN (lambda=1.0), mean +/- std over 5 seeds ===")
+print("MAE_vm: %.5f +/- %.5f" % (results_pignn[:,0].mean(), results_pignn[:,0].std()))
+print("RMSE_vm: %.5f +/- %.5f" % (results_pignn[:,1].mean(), results_pignn[:,1].std()))
+print("KCL_P resid: %.5f +/- %.5f" % (results_pignn[:,2].mean(), results_pignn[:,2].std()))
+print("KCL_Q resid: %.5f +/- %.5f" % (results_pignn[:,3].mean(), results_pignn[:,3].std()))
+print("XAI Causal Attribution Share: %.2f%% +/- %.2f%%" % (np.mean(xai_scores_pignn), np.std(xai_scores_pignn)))
