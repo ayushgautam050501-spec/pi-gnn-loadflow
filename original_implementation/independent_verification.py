@@ -18,10 +18,18 @@ np.random.seed(42)
 
 
 def build_adjacency():
-    A = np.eye(N)  # each bus also "hears itself" (self-loop, standard in GCNs)
-    for (f, t, r, x, b) in branch_data:
-        A[f-1, t-1] = 1
-        A[t-1, f-1] = 1
+    """
+    Edge weights are derived from |Ybus| magnitude (consistent with
+    verification/train_and_ablate.py and Section 5 of the paper), not
+    plain 0/1 topology -- so a bus connected via a low-impedance line
+    gets more "say" in the aggregation than one connected via a
+    high-impedance line, matching how KCL actually distributes current.
+    """
+    from powerflow9 import build_ybus, branch_data as _branch_data
+    Ybus = build_ybus(_branch_data)
+    A = np.abs(Ybus)
+    np.fill_diagonal(A, 0.0)          # remove self-admittance, add explicit self-loop below
+    A = A + np.eye(N) * A.max()       # self-loop weight (standard GCN trick)
     D = np.diag(1.0 / np.sqrt(A.sum(axis=1)))  # normalize so messages don't blow up
     return D @ A @ D
 
