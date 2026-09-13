@@ -13,6 +13,8 @@ Supporting code for "Explainable Physics-Informed Graph Neural Networks for Load
   - `train_and_ablate.py` — trains baseline GCN vs. PI-GNN across 5 seeds, runs the
     physics-loss-weight (lambda) ablation, and runs a paired t-test.
   - `results.json` — raw numeric output backing Sections 6.1, 11.1, and 11.2 of the paper.
+  - ## Verification & Reproducibility
+* Independent ablation benchmarks and blind replication experiments can be found under [`verification/tests/`](https://github.com/ayushgautam050501-spec/pi-gnn-loadflow/tree/main/verification/tests).
 
 ## Reproducing the verification results
 ```
