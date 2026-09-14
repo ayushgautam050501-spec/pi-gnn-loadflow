@@ -1,0 +1,38 @@
+{
+  "Config A: [P,Q], lambda=0.0 (baseline)": {
+    "voltage_mae_mean": 0.01336266752332449,
+    "voltage_mae_std": 0.0018655164602000235,
+    "angle_mae_mean": 0.059943022578954695,
+    "angle_mae_std": 0.00025199717251856726
+  },
+  "Config A: [P,Q], lambda=1.0 (PI-GNN)": {
+    "voltage_mae_mean": 0.10586348474025727,
+    "voltage_mae_std": 9.419608491229479e-08,
+    "angle_mae_mean": 0.07619062215089797,
+    "angle_mae_std": 3.41103170581448e-08
+  },
+  "Config B: [P,Q,Iavg], lambda=0.0": {
+    "voltage_mae_mean": 0.011852455325424671,
+    "voltage_mae_std": 0.00011321767331487018,
+    "angle_mae_mean": 0.0589708037674427,
+    "angle_mae_std": 0.0002680273266134871
+  },
+  "Config B: [P,Q,Iavg], lambda=1.0": {
+    "voltage_mae_mean": 0.10769127011299133,
+    "voltage_mae_std": 0.001800597794664397,
+    "angle_mae_mean": 0.07617394030094146,
+    "angle_mae_std": 0.00015669850922331945
+  },
+  "Config C: [P,Q], lambda=0.1": {
+    "voltage_mae_mean": 0.018803263455629347,
+    "voltage_mae_std": 6.264028835167873e-08,
+    "angle_mae_mean": 0.07519634366035462,
+    "angle_mae_std": 1.0106459234841567e-08
+  },
+  "Config D: [P,Q,Iavg], lambda=0.1": {
+    "voltage_mae_mean": 0.019193781539797783,
+    "voltage_mae_std": 0.0003887282791474988,
+    "angle_mae_mean": 0.0749860167503357,
+    "angle_mae_std": 0.00017634918101897953
+  }
+}
