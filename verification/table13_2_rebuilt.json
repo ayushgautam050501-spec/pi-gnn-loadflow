@@ -1,0 +1,10 @@
+{
+  "zero_injection_buses_1indexed": [
+    4,
+    6,
+    8
+  ],
+  "zero_baseline_attribution_pct": 0.0,
+  "mean_grid_baseline_attribution_pct": 0.0,
+  "note": "Fraction of total |IG| attribution landing on the true zero-injection buses (which structurally should carry little causal weight), compared across baseline choices, on the actual trained PI-GNN-family model."
+}
