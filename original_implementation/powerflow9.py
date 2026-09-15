@@ -2,7 +2,7 @@
 Standalone Newton-Raphson Solver (IEEE 9-Bus / WSCC system)
 Reconstructed from dissertation Appendix, Item 6.
 This is the core dependency imported by the other reconstructed scripts.
-"""
+
 import numpy as np
 
 BASE_MVA = 100.0
@@ -58,7 +58,7 @@ def build_ybus(branches, out_of_service=None):
 
 
 def newton_raphson(Ybus, Pd, Qd, Pg, Vset, bus_types, tol=1e-8, max_iter=30):
-    """bus_types: array len N, 3=slack, 2=PV, 1=PQ. Returns Vm, Va (deg), converged flag."""
+    
     Vm = np.array([Vset[i] if bus_types[i] != 1 else 1.0 for i in range(N)])
     Va = np.zeros(N)
     P_spec = (Pg - Pd) / BASE_MVA
