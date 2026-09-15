@@ -15,7 +15,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GroupKFold
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 
-from powerflow9 import run_case, branch_data, bus_data, gen_data, N
 
 np.random.seed(42)
 
