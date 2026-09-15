@@ -12,7 +12,6 @@ Requires: numpy. Depends on powerflow9.py (same folder).
 import time
 import numpy as np
 
-from powerflow9 import run_case, branch_data, bus_data, gen_data, N
 
 np.random.seed(42)
 
@@ -25,8 +24,6 @@ def build_adjacency():
     gets more "say" in the aggregation than one connected via a
     high-impedance line, matching how KCL actually distributes current.
     """
-    from powerflow9 import build_ybus, branch_data as _branch_data
-    Ybus = build_ybus(_branch_data)
     A = np.abs(Ybus)
     np.fill_diagonal(A, 0.0)          # remove self-admittance, add explicit self-loop below
     A = A + np.eye(N) * A.max()       # self-loop weight (standard GCN trick)
