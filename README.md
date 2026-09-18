@@ -23,5 +23,3 @@ python gen_dataset.py
 python train_and_ablate.py
 ```
 
-## Citation
-[Add citation once published.]
