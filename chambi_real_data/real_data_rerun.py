@@ -1,3 +1,6 @@
+Before running the file remember to install pandapower with the given code- !pip install pandapower in the terminal.WIthout adding the code its not possible for the viewer to run the given codes.
+Also remember to  kindly run the realloadprofile.py and the powerflow9.py.Without running these given files the code in this section will show error.
+    
 import sys
 import os
 import numpy as np
@@ -53,3 +56,8 @@ print("Shape of X_real:", X_real.shape)
 print("Shape of Y_real:", Y_real.shape)
 print("Shape of Pnet_real:", Pnet_real.shape)
 
+Note for the vieweer- This experiment pipeline represented by the program real_data_rerun.py (which thus also performs the power-flow computations,helps us puting the dataset together) 
+is also used for the loading scenarios,both real and synthetic.The given real loading data exists separately under the real_load_profile.py,but which contains the real loading data in 
+the form of the Chambi TRAFO_LV2 SCADA data in the 24-hour digital form.The real_data_rerun.py code takes its loading factors from that program; sampling Uniform(0.75,1.25) 
+acts only as a backup option in case of nonavailability of the real_load_profile.py program in some environment, and the program was never the source of results stated 
+in Section 16.2.
