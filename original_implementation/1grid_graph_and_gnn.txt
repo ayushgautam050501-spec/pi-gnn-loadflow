@@ -1,8 +1,6 @@
-Grid Topology/Feature Extraction, GNN Structure, and Training Process.
-Created by dissertation appendix (elements 1-3).
+This is the Grid Topology/Feature Extraction,GNN Structure,and the Training Process.
 
-NOTE: this refers to the CLASSIFICATION model mentioned before (makes predictions if bus voltage is critical / out of limits) and should not be confused with regression PI-GNN described both here and in independent_verification.py. Both models are present in dissertation appendix and should remain separate in documentation.
-
+NOTE: Kindly install all the other given files first e.g. real_data_rerun.py without installing other files the code will show us an error,and that's why its beneficial to use and install all the other drafted codes.
 # Install torch_geometric and its dependencies
 !pip install torch_geometric
 
