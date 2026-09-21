@@ -1,8 +1,8 @@
 This is the Grid Topology/Feature Extraction,GNN Structure,and the Training Process.
-
 NOTE: Kindly install all the other given files first e.g. real_data_rerun.py without installing other files the code will show us an error,and that's why its beneficial to use and install all the other drafted codes.
+
 # Install torch_geometric and its dependencies
-!pip install torch_geometric
+!pip install torch_geometric                               (This particular command was generated to install Pytorch-Geometric,a library built for the Graph Neural Networks)
 
 import pandapower as pp
 import pandapower.networks as nw
@@ -15,22 +15,21 @@ from torch_geometric.loader import DataLoader # Changed from torch.utils.data.Da
 
 def initialize_grid_graph(case_type='case9'):
     # 1. Load test system (e.g., IEEE 9-bus) and generate ground truth via Newton-Raphson
-    net = nw.case9()
+    net = nw.case9()                    (This command helps us to load the IEEE-9 bus test-system,by this you can Newton-Raphson to get real,physically valid voltage values)
     pp.runpp(net)
 
     # 2. Node feature extraction: voltage magnitude and phase angle
-    x = torch.tensor(net.res_bus[['vm_pu', 'va_degree']].values, dtype=torch.float)
+    x = torch.tensor(net.res_bus[['vm_pu', 'va_degree']].values, dtype=torch.float)    ( For the each of the 9 buses,it stores the voltage magnitude and angle)
 
     # 3. Define target (critical if voltage is outside [0.95, 1.05] p.u.)
     v_mag = net.res_bus['vm_pu'].values
-    y = torch.tensor(((v_mag < 0.95) | (v_mag > 1.05)).astype(int), dtype=torch.long)
+    y = torch.tensor(((v_mag < 0.95) | (v_mag > 1.05)).astype(int), dtype=torch.long)   ( for each bus,mark it 1,if its voltage falls outside the normal safe operating band)
 
     # 4. Create edge index (undirected graph)
     bus_to_idx = {bus_id: i for i, bus_id in enumerate(net.bus.index.values)}
     from_nodes = [bus_to_idx[b] for b in net.line['from_bus'].values]
     to_nodes = [bus_to_idx[b] for b in net.line['to_bus'].values]
-    edge_index = torch.tensor([from_nodes + to_nodes, to_nodes + from_nodes], dtype=torch.long)
-
+    edge_index = torch.tensor([from_nodes + to_nodes, to_nodes + from_nodes], dtype=torch.long)       (Edges: This command helps builds the actual wiring diagram)
     return Data(x=x, edge_index=edge_index, y=y)
 
 
@@ -40,21 +39,21 @@ class GCN(torch.nn.Module):
     def __init__(self, num_node_features, num_classes):
         super(GCN, self).__init__()
         self.conv1 = GCNConv(num_node_features, 16)
-        self.conv2 = GCNConv(16, num_classes)
+        self.conv2 = GCNConv(16, num_classes)                      (These are the two graph-convolution layers,thus stacked but the first turns each bus's 2 input features)
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
         x = F.relu(self.conv1(x, edge_index))
         x = F.dropout(x, p=0.2, training=self.training)
-        return self.conv2(x, edge_index)
+        return self.conv2(x, edge_index)                        ( This is a 2-layer network where each layer let's the buses share information with their direct neighbours)
 
 
 def train_one_epoch(model, train_loader, optimizer, criterion):
     """
-    NOTE (documented for transparency): the dissertation records that a naive
+    NOTE (documented for transparency): This experiment records that a naive
     version of this training loop achieved ~100% accuracy but F1=0.00 for the
-    critical class -- the "Accuracy Paradox" -- because the majority class
-    (non-critical) dominates the base-case/lightly-loaded dataset. Class
+    critical class -- the "Accuracy Paradox" -- because the majority of class
+    i.e.(non-critical) dominates the core base-case/lightly-loaded dataset.The 
     imbalance handling (e.g. class_weight='balanced', or the N-1/N-2 augmented
     dataset in contingency_analysis.py) is required to get a meaningful F1.
     """
@@ -64,8 +63,8 @@ def train_one_epoch(model, train_loader, optimizer, criterion):
         optimizer.zero_grad()
         out = model(data)
         loss = criterion(out, data.y)
-        loss.backward()
-        optimizer.step()
+        loss.backward
+        optimizer.step()                                  (This is our standard training loop pattern used everywhere in the deep learning)
         total_loss += loss.item()
     return total_loss / len(train_loader)
 
@@ -80,6 +79,6 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     for epoch in range(50):
-        loss = train_one_epoch(model, train_loader, optimizer, criterion)
+        loss = train_one_epoch(model, train_loader, optimizer, criterion)    (repeats the process over 50 times in the same graph,gradually improving)
         if epoch % 10 == 0:
             print(f"epoch {epoch:3d}  loss={loss:.4f}")
